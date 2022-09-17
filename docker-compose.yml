@@ -1,0 +1,138 @@
+# Use root/example as user/password credentials
+version: '3.8'
+
+services:
+
+  mongo:
+    container_name: mongoDB-financialData
+    image: mongo:4.4.10 # I need this specifc version as I am running on an arm device and > v4.4.10 does not support arm
+    command: --bind_ip 0.0.0.0  # need to allow incoming connections
+    restart: always
+    secrets:
+      - mongo_root_user
+      - mongo_root_pass
+      - mongo_worker
+      - mongo_worker_password
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: mongo_root_user
+      MONGO_INITDB_ROOT_PASSWORD: mongo_root_pass
+      WORKER_USERNAME: mongo_worker
+      WORKER_PASSWORD: mongo_worker_password
+      #MONGO_INITDB_DATABASE: orderbook&trades
+    volumes:
+        # where database will be stored - can use docker volume instead 
+      - "../databases/mongoDB:/data/db"
+        # setup scripts to setup database or restore if already present
+      - "./setup/mongoDB:/docker-entrypoint-initdb.d"
+        # this is where you would put a backup to restore to - if this is missing a new database will be setup
+      - "/home/admin/mongodb-backup:/restore:ro"
+    ports:
+      - "27017:27017"
+    networks:
+      default:
+        ipv4_address: 182.16.0.3
+    # I use loki & grafana for logging - you may want to remove this
+    logging:
+      driver: loki
+      options:
+        loki-url: http://182.16.0.7:3100/loki/api/v1/push
+        loki-external-labels: "job=docker,container_name={{.Name}}"
+
+  usersDB-sql:
+    image: mariadb
+    restart: unless-stopped
+    container_name: orderbookTechAnalysisUsers
+    ports:
+      - "3306:3306"
+    volumes:
+      # again where database will be stored - can use docker volume instead
+      - "../databases/sql:/var/lib/mysql"
+      # setup scripts
+      - "./setup/sqlserver/initSQLDB.sql:/docker-entrypoint-initdb.d/initialiseDB.sql"
+    networks:
+      default:
+        ipv4_address: 182.16.0.6
+    secrets:
+      - mysql_root_pass
+      - mysql-user
+      - mysql-user-password
+    environment:
+      MYSQL_ROOT_PASSWORD: mysql_root_pass
+      MYSQL_USER: mysql-user
+      MYSQL_PASSWORD: mysql-user-password
+    logging:
+      driver: loki
+      options:
+        loki-url: http://182.16.0.7:3100/loki/api/v1/push
+        loki-external-labels: "job=docker,container_name={{.Name}}"
+
+  mongo-express:
+    image: mongo-express:latest
+    container_name: mongowebinsterface
+    restart: always
+    secrets:
+      - mongo_root_user
+      - mongo_url
+      - mongo_root_pass_encoded
+    environment:
+      # url should be: 'mongodb://mongo_root_user:mongo_root_password@182.16.0.3:27017/' 
+      # note: special characters in the password dont work, use https://www.url-encode-decode.com/ to create url encoded password
+      #ME_CONFIG_MONGODB_URL: mongo_url
+      ME_CONFIG_BASICAUTH_USERNAME: admin
+      ME_CONFIG_BASICAUTH_PASSWORD: changeme
+      ME_CONFIG_MONGODB_ENABLE_ADMIN: 'true'
+      ME_CONFIG_MONGODB_ADMINUSERNAME: mongo_root_user
+      ME_CONFIG_MONGODB_ADMINPASSWORD: mongo_root_pass_encoded
+      ME_CONFIG_MONGODB_SERVER: mongoDB-financialData # 182.16.0.3
+      ME_CONFIG_OPTIONS_EDITORTHEME: midnight
+    ports:
+      - "8081:8081"
+    volumes:
+      - "./setup/mongo-express/config.js:/node_modules/mongo-express/config.js"
+    networks:
+      default:
+        ipv4_address: 182.16.0.4
+    depends_on:
+      - mongo
+    logging:
+      driver: loki
+      options:
+        loki-url: http://182.16.0.7:3100/loki/api/v1/push
+        loki-external-labels: "job=docker,container_name={{.Name}}"
+
+  phpmyadmin:
+    image: phpmyadmin
+    restart: unless-stopped
+    ports:
+      - 8080:80
+    environment:
+      - PMA_ARBITRARY: 1
+      - PMA_HOST: 182.16.0.6
+      - PMA_PORT: 3306
+
+secrets:
+  mongo_root_user:
+    file: ./setup/secrets/mongo-root-username.txt
+  mongo_root_pass:
+    file: ./setup/secrets/mongo-root-password.txt
+  mongo_worker:
+    file: ./setup/secrets/mongo-user-password.txt
+  mongo_worker_password:
+    file: ./setup/secrets/mongo-user.txt
+  mongo_root_pass_encoded:
+    file: ./setup/secrets/mongo-root-password-urlencoded.txt
+  mongo_url:
+    file: ./setup/secrets/mongo-url.txt
+  mysql_root_pass:
+    file: ./setup/secrets/mysql-root-password.txt
+  mysql-user:
+    file: ./setup/secrets/mysql-user.txt
+  mysql-user-password:
+    file: ./setup/secrets/mysql-user-password.txt
+
+networks:
+    default:
+      ipam:
+        driver: default
+        config:
+          - subnet: '182.16.0.0/16'

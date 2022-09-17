@@ -1,0 +1,36 @@
+ -- comments in sql scripts are any text following '--' to end of line or between /* */
+CREATE DATABASE orderbooktechanal;
+CREATE TABLE IF NOT EXISTS orderbooktechanal.Users(
+	userID int AUTO_INCREMENT PRIMARY KEY,
+	username varchar(64) NOT NULL,
+	password varchar(128) NOT NULL,
+	firstName varchar(16) NOT NULL,
+	lastName varchar(16) NOT NULL,
+	joindate TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+	memberlevel int,
+	profilepic varchar(12),
+	profile LONGTEXT,
+) ENGINE=InnoDB;
+USE orderbooktechanal; 
+-- used USE <db> so that we dont have to specify which db we want to insert into for the rest of the script
+CREATE TABLE IF NOT EXISTS orders(
+	orderID int AUTO_INCREMENT,
+	userID int NOT NULL,
+	amount float NOT NULL,
+	transactionTimeStamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+	promotion varchar(8),
+	nextDueDate DATE,
+	PRIMARY KEY (orderID),
+	FOREIGN KEY (userID) REFERENCES Users(userID)
+) ENGINE=InnoDB;
+INSERT INTO Users (userID, username, password, firstName, lastName,  profile)
+VALUES (010101, 'testUser123', 'passwrd', 'Angel', 'Smith', 'this is a test entry for the profile');
+INSERT INTO orders(orderID, userID, amount, nextDueDate)
+VALUES (1, 010101, 500, '2022-02-20');
+-- DATE also has time stamp but we can ignore we just have to use correctly formatted date 'YYYY-MM-DD' 'YYYY/MM/DD'  'YYMMDD'
+/* encrypted stuff -
+encrypted_id: SELECT HEX(AES_ENCRYPT(id, 'my-private-key'));
+id: SELECT AES_DECRYPT(UNHEX(encrypted_id), 'my-private-key');
+-- UUID() creates unique 128 bit number or 36 char so we shou;ld ;use it for orderID and maybe userID
+-- can be used like table: BINARY(16) then insert: UUID_TO_BIN(UUID())
+*/

@@ -1,0 +1,6 @@
+[submodule "OrderbookTechAnalysis-Logger"]
+	path = OrderbookTechAnalysis-Logger
+	url = https://github.com/RT-Tap/OrderbookTechAnalysis-Logger.git
+[submodule "OrderbookTechAnalysis-RESTAPI"]
+	path = OrderbookTechAnalysis-RESTAPI
+	url = https://github.com/RT-Tap/OrderbookTechAnalysis-RESTAPI.git

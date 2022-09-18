@@ -4,3 +4,6 @@
 [submodule "OrderbookTechAnalysis-RESTAPI"]
 	path = OrderbookTechAnalysis-RESTAPI
 	url = https://github.com/RT-Tap/OrderbookTechAnalysis-RESTAPI.git
+[submodule "OrderbookTechAnalysis-Frontend"]
+	path = OrderbookTechAnalysis-Frontend
+	url = https://github.com/RT-Tap/OrderbookTechAnalysis-Frontend.git

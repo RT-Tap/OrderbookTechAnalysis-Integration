@@ -66,6 +66,70 @@ services:
         loki-url: http://182.16.0.7:3100/loki/api/v1/push
         loki-external-labels: "job=docker,container_name={{.Name}}"
 
+  frontend:
+    build: 
+      context: https://github.com/RT-Tap/OrderbookTechAnalysis-Frontend
+    restart: unless-stopped
+    container_name:  orderbookTechAnalysisWebsite
+    ports:
+      - "80:80"
+    networks:
+      default:
+        ipv4_address: 182.16.0.9
+    logging:
+      driver: loki
+      options:
+        loki-url: http://182.16.0.7:3100/loki/api/v1/push
+        loki-external-labels: "job=docker,container_name={{.Name}}"
+
+  api:
+    build: 
+      context: https://github.com/RT-Tap/OrderbookTechAnalysis-RESTAPI
+    restart: unless-stopped
+    container_name:  orderbookTechAnalysisAPI
+    ports:
+      - "80:80"
+    networks:
+      default:
+        ipv4_address: 182.16.0.12
+    secrets:
+      - mongo_worker
+      - mongo_worker_password
+      - mysql-user
+      - mysql-user-password
+    environment:
+      MYSQL_USER: mysql-user
+      MYSQL_PASSWORD: mysql-user-password
+      WORKER_USERNAME: mongo_worker
+      WORKER_PASSWORD: mongo_worker_password
+      MONGODB_ENDPOINT: 182.16.0.3
+      FQDOMAIN: oderbooktechanalysis.com
+    logging:
+      driver: loki
+      options:
+        loki-url: http://182.16.0.7:3100/loki/api/v1/push
+        loki-external-labels: "job=docker,container_name={{.Name}}"
+
+  logger:
+    build: 
+      context: https://github.com/RT-Tap/OrderbookTechAnalysis-Logger
+    restart: unless-stopped
+    container_name:  orderbookTechAnalysisLogger
+    ports:
+      - "6643:6643"
+    networks:
+      default:
+        ipv4_address: 182.16.0.15
+    environment:
+      USE_ENV_FILE: False
+      MONGODB_ENDPOINT: 182.16.0.3:27017
+    logging:
+      driver: loki
+      options:
+        loki-url: http://182.16.0.7:3100/loki/api/v1/push
+        loki-external-labels: "job=docker,container_name={{.Name}}"
+
+
 secrets:
   mongo_root_user:
     file: ./setup/secrets/mongo-root-username.txt

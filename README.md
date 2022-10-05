@@ -11,7 +11,8 @@ The idea arose after watching a [very interesting video about the 2010 flash cra
 ---
 # OrderbookTechAnalysis modules
 ## OrderbookTechAnalysis-Integration  -  This repo 
-Integration of submodule repositories which together create the full stack.  It is mainly responsible for creating/restoring databases used in the deployment as well as creating the correct environment for the different elements/submodules to work together correctly. 
+Integration of submodule repositories which together create the full stack.  It is mainly responsible for creating/restoring databases used in the deployment as well as creating the correct environment for the different elements/submodules to work together correctly.  
+### NOTE: This integration at its current state has not yet been fully tested as this project as a whole is still under heavy active development and different components change it may break.  I do my best to keep it up to date though.
 ### Start/Run: 
   - Set necessary docker secrets in `/steup/secrets`, most are sefl-explanatory
     - mongo_root_user.txt  
